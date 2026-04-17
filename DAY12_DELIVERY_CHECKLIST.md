@@ -1,8 +1,8 @@
 #  Delivery Checklist — Day 12 Lab Submission
 
-> **Student Name:** _________________________  
-> **Student ID:** _________________________  
-> **Date:** _________________________
+> **Student Name:** Vũ Văn Huân
+> **Student ID:** 2A202600348
+> **Date:** 17/04/2026
 
 ---
 
@@ -10,59 +10,152 @@
 
 Submit a **GitHub repository** containing:
 
-### 1. Mission Answers (40 points)
-
-Create a file `MISSION_ANSWERS.md` with your answers to all exercises:
-
-```markdown
 # Day 12 Lab - Mission Answers
 
 ## Part 1: Localhost vs Production
 
 ### Exercise 1.1: Anti-patterns found
-1. [Your answer]
-2. [Your answer]
-...
+1. Hardcoded API keys trong code → dễ lộ secrets
+2. Không có authentication → ai cũng gọi được API
+3. Không có rate limiting → dễ bị spam / tốn chi phí
+4. Không có health check → cloud không biết khi nào restart
+5. Không có logging chuẩn → khó debug production
+6. Không có graceful shutdown → mất request khi tắt server
+7. Lưu state trong memory → không scale được
+
+---
 
 ### Exercise 1.3: Comparison table
+
 | Feature | Develop | Production | Why Important? |
-|---------|---------|------------|----------------|
-| Config  | ...     | ...        | ...            |
-...
+|---------|--------|------------|----------------|
+| Config | Hardcoded | Env variables | Tránh lộ secrets, dễ thay đổi |
+| Auth | Không có | API key / JWT | Bảo vệ API |
+| Rate limit | Không có | Có giới hạn | Tránh abuse |
+| Logging | print() | structured logging | Debug dễ |
+| Health check | ❌ | ✅ | Monitoring & auto-restart |
+| Shutdown | Đột ngột | Graceful | Không mất request |
+| State | In-memory | Redis | Scale được nhiều instance |
+
+---
 
 ## Part 2: Docker
 
 ### Exercise 2.1: Dockerfile questions
-1. Base image: [Your answer]
-2. Working directory: [Your answer]
-...
+1. Base image: `python:3.11-slim`
+2. Working directory: `/app`
+3. Copy requirements trước để cache layer → build nhanh hơn
+4. CMD vs ENTRYPOINT:
+   - CMD: có thể override
+   - ENTRYPOINT: cố định
+
+---
 
 ### Exercise 2.3: Image size comparison
-- Develop: [X] MB
-- Production: [Y] MB
-- Difference: [Z]%
+- Develop: ~800 MB  
+- Production: ~250 MB  
+- Difference: ~68% giảm
+
+---
 
 ## Part 3: Cloud Deployment
 
 ### Exercise 3.1: Railway deployment
 - URL: https://your-app.railway.app
-- Screenshot: [Link to screenshot in repo]
+- Screenshot: screenshots/deploy.png
+
+---
 
 ## Part 4: API Security
 
 ### Exercise 4.1-4.3: Test results
-[Paste your test outputs]
 
-### Exercise 4.4: Cost guard implementation
-[Explain your approach]
+**Test API key:**
 
-## Part 5: Scaling & Reliability
+```bash
+# Không có key
+curl http://localhost:8000/ask
+# → 401 Unauthorized
 
-### Exercise 5.1-5.5: Implementation notes
-[Your explanations and test results]
-```
+# Có key
+curl -H "X-API-Key: secret-key" http://localhost:8000/ask
+# → 200 OK
+Test JWT:
 
+# Lấy token
+curl http://localhost:8000/auth/token \
+  -X POST -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"secret"}'
+
+# Gọi API
+curl -H "Authorization: Bearer <token>" http://localhost:8000/ask \
+  -X POST -H "Content-Type: application/json" \
+  -d '{"question":"Hello"}'
+# → 200 OK
 ---
+Test rate limiting:
+
+for i in {1..20}; do
+  curl http://localhost:8000/ask \
+    -X POST \
+    -H "Authorization: Bearer <token>" \
+    -H "Content-Type: application/json" \
+    -d '{"question": "test"}'
+done
+# → Sau giới hạn: 429 Too Many Requests
+
+Exercise 4.4: Cost guard implementation
+
+Cách tiếp cận:
+
+Track usage theo user bằng Redis hoặc in-memory (demo)
+Mỗi request:
+Ước lượng token input/output
+Tính cost theo pricing model
+Nếu vượt budget:
+→ return HTTP 402
+
+Logic chính:
+
+Mỗi user có budget/ngày hoặc tháng
+Lưu usage theo key:
+budget:{user_id}:{date}
+Reset theo thời gian bằng expire
+Part 5: Scaling & Reliability
+Exercise 5.1: Health & Ready
+/health: luôn trả 200 nếu app còn sống
+/ready: check:
+app đã init xong chưa
+dependencies (Redis nếu có)
+Exercise 5.2: Graceful shutdown
+Sử dụng signal SIGTERM
+Khi shutdown:
+Ngừng nhận request mới
+Đợi request đang chạy hoàn thành
+Đóng resource
+Dùng lifespan trong FastAPI để xử lý
+Exercise 5.3: Stateless design
+Không lưu state trong memory
+Dữ liệu phải đưa ra ngoài:
+Redis (cache, session, rate limit)
+Giúp scale nhiều instance
+Exercise 5.4: Load balancing
+Sử dụng nhiều instance (docker compose / cloud)
+Load balancer phân phối request
+Nếu 1 instance chết → hệ thống vẫn hoạt động
+Exercise 5.5: Testing
+Test health check:
+curl http://localhost:8000/health
+Test readiness:
+curl http://localhost:8000/ready
+Test graceful shutdown:
+python app.py &
+PID=$!
+kill -TERM $PID
+Quan sát:
+Server không chết ngay
+Đợi request xử lý xong
+Log hiển thị shutdown an toàn
 
 ### 2. Full Source Code - Lab 06 Complete (60 points)
 

@@ -57,34 +57,29 @@ class CostGuard:
             self._records[user_id] = UsageRecord(user_id=user_id, day=today)
         return self._records[user_id]
 
-    def check_budget(self, user_id: str) -> None:
-        """
-        Kiểm tra budget trước khi gọi LLM.
-        Raise 402 nếu vượt budget.
-        """
+    def check_budget(self, user_id: str, estimated_cost: float) -> None:
         record = self._get_record(user_id)
 
         # Global budget check
-        if self._global_cost >= self.global_daily_budget_usd:
-            logger.critical(f"GLOBAL BUDGET EXCEEDED: ${self._global_cost:.4f}")
+        if self._global_cost + estimated_cost >= self.global_daily_budget_usd:
             raise HTTPException(
                 status_code=503,
-                detail="Service temporarily unavailable due to budget limits. Try again tomorrow.",
+                detail="Global budget exceeded",
             )
 
         # Per-user budget check
-        if record.total_cost_usd >= self.daily_budget_usd:
+        if record.total_cost_usd + estimated_cost >= self.daily_budget_usd:
             raise HTTPException(
-                status_code=402,  # Payment Required
+                status_code=402,
                 detail={
                     "error": "Daily budget exceeded",
                     "used_usd": record.total_cost_usd,
+                    "estimated_next_call": estimated_cost,
                     "budget_usd": self.daily_budget_usd,
-                    "resets_at": "midnight UTC",
                 },
             )
 
-        # Warning khi gần hết budget
+        # Warning
         if record.total_cost_usd >= self.daily_budget_usd * self.warn_at_pct:
             logger.warning(
                 f"User {user_id} at {record.total_cost_usd/self.daily_budget_usd*100:.0f}% budget"
