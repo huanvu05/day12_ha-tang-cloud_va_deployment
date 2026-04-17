@@ -164,6 +164,7 @@ curl http://localhost:8000/ask -X POST \
 ```
 
 **Quan sát:** Image size là bao nhiêu?
+1.16 GB
 ```bash
 docker images my-agent:develop
 ```
