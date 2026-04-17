@@ -46,7 +46,10 @@ services:
     name: agent-cache
     plan: free
     maxmemoryPolicy: allkeys-lru
-
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: allow all (dev only)
+      
 # ============================================================
 # Cách deploy:
 #   1. Push code lên GitHub
