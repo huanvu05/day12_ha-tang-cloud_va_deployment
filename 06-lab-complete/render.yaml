@@ -29,8 +29,8 @@ services:
       - key: ALLOWED_ORIGINS
         value: "*"
 
-  - type: redis
-    name: day12-agent-redis
-    region: singapore
-    plan: free
-    maxmemoryPolicy: allkeys-lru
+  - key: REDIS_URL
+    fromService:
+      name: day12-agent-redis
+      type: redis
+      property: connectionString

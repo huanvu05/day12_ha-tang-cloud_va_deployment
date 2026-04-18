@@ -201,23 +201,23 @@ Create a file `DEPLOYMENT.md` with your deployed service information:
 # Deployment Information
 
 ## Public URL
-https://your-agent.railway.app
+https://zero6-lab.onrender.com/
 
 ## Platform
-Railway / Render / Cloud Run
+Render
 
 ## Test Commands
 
 ### Health Check
 ```bash
-curl https://your-agent.railway.app/health
+curl https://zero6-lab.onrender.com/health
 # Expected: {"status": "ok"}
 ```
 
 ### API Test (with authentication)
 ```bash
-curl -X POST https://your-agent.railway.app/ask \
-  -H "X-API-Key: YOUR_KEY" \
+curl -X POST https://zero6-lab.onrender.com/ask \
+  -H "X-API-Key: huanvu05" \
   -H "Content-Type: application/json" \
   -d '{"user_id": "test", "question": "Hello"}'
 ```
@@ -227,12 +227,17 @@ curl -X POST https://your-agent.railway.app/ask \
 - REDIS_URL
 - AGENT_API_KEY
 - LOG_LEVEL
+- MONTHLY_BUDGET_USD
+- RATE_LIMIT_PER_MINUTE
+- RATE_LIMIT_WINDOW_SECONDS
+- ALLOWED_ORIGINS
+- APP_VERSION
+- ENVIRONMENT
 
 ## Screenshots
 - [Deployment dashboard](screenshots/dashboard.png)
-- [Service running](screenshots/running.png)
-- [Test results](screenshots/test.png)
-```
+![alt text](<Screenshot 2026-04-18 at 12.28.02.png>) ![alt text](<Screenshot 2026-04-18 at 12.27.45.png>)
+
 
 ##  Pre-Submission Checklist
 
@@ -255,20 +260,22 @@ Before submitting, verify your deployment:
 
 ```bash
 # 1. Health check
-curl https://your-app.railway.app/health
+curl https://zero6-lab.onrender.com/health
+{"status":"degraded","version":"1.0.0","environment":"development","redis":"disconnected","uptime_seconds":151.5,"total_requests":5,"active_requests":1,"timestamp":"2026-04-18T05:26:06.101020+00:00"}% 
 
 # 2. Authentication required
-curl https://your-app.railway.app/ask
+curl https://zero6-lab.onrender.com/ask
 # Should return 401
+{"error":"authentication_error","detail":"Missing API key. Include header: X-API-Key: <your-key>"}%
 
 # 3. With API key works
-curl -H "X-API-Key: YOUR_KEY" https://your-app.railway.app/ask \
+curl -H "X-API-Key: huanvu05" https://your-app.railway.app/ask \
   -X POST -d '{"user_id":"test","question":"Hello"}'
 # Should return 200
 
 # 4. Rate limiting
 for i in {1..15}; do 
-  curl -H "X-API-Key: YOUR_KEY" https://your-app.railway.app/ask \
+  curl -H "X-API-Key: huanvu05" https://your-app.railway.app/ask \
     -X POST -d '{"user_id":"test","question":"test"}'; 
 done
 # Should eventually return 429
@@ -281,8 +288,7 @@ done
 **Submit your GitHub repository URL:**
 
 ```
-https://github.com/your-username/day12-agent-deployment
-```
+https://github.com/huanvu05/day12_ha-tang-cloud_va_deployment.git```
 
 **Deadline:** 17/4/2026
 
@@ -307,5 +313,3 @@ https://github.com/your-username/day12-agent-deployment
 - Post in discussion forum
 
 ---
-
-**Good luck! **
